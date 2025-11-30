@@ -21,6 +21,8 @@ def carregar_excel(arquivo):
 dados = carregar_excel('Dados.xlsx')
 print(dados)
 
+
+print("MATRIZ DE INCIDÊNCIA:")
 print("\n")
 def gerar_matriz_incidencia(df):
     matriz = pd.crosstab(df['from'], df['to'])
@@ -40,7 +42,9 @@ def gerar_matriz_similaridade(matriz_inc):
 matriz_sim = gerar_matriz_similaridade(matriz_inc)
 
 print(matriz_sim)
-
+print("\n")
+print("MATRIZ DE COOCORRÊNCIA:")
+print("\n")
 def gerar_matriz_coocorrencia(matriz_inc):
     matriz_co = matriz_inc.T.dot(matriz_inc)
 
@@ -51,6 +55,8 @@ matriz_co = gerar_matriz_coocorrencia(matriz_inc)
 
 print(matriz_co)
 
+print("\n")
+print("GRAFOS:")
 print("\n")
 def gerar_grafo_incidencia(df):
     G = nx.from_pandas_edgelist(df, source='from', target='to', edge_attr='weight', create_using=nx.DiGraph())
