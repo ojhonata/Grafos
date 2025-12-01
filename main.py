@@ -1,8 +1,8 @@
-import pandas as pd
-import numpy as np
-import os
-import networkx as nx
-import matplotlib.pyplot as plt
+import pandas as pd # Lê o Excel e organiza os dados em tabelas
+import numpy as np # Faz os cálculos das matrizes 
+import os # Verifica se o arquivo realmente existe no computador
+import networkx as nx # Cria a estrutura da rede e calcula as estatísticas Grau Médio, Densidade e Conectividade
+import matplotlib.pyplot as plt # Desenha os grafos na tela
 
 def carregar_excel(arquivo):
     # Verificar se o arquivo existe
@@ -37,6 +37,7 @@ matriz_inc = gerar_matriz_incidencia(dados)
 
 print(matriz_inc)
 print("\n")
+print("MATRIZ DE SIMILARIDADE:")
 def gerar_matriz_similaridade(matriz_inc):
     # Multiplicação da matriz de incidência pela sua transposta
     matriz_sim = matriz_inc.dot(matriz_inc.T)
@@ -129,7 +130,13 @@ def gerar_grafo_coocorrencia(matriz_co):
     c = nx.from_pandas_adjacency(matriz_co)
 
     # Remover arestas com peso zero
-    arestas_zero = [(u, v) for u, v, d in c.edges(data=True) if d.get('weight', 0) == 0]
+    arestas_zero = []
+
+    # Percorre todas as arestas com seus atributos
+    for u, v, data in c.edges(data=True):
+        peso = data.get('weight', 0)
+        if peso == 0:
+            arestas_zero.append((u, v))
     c.remove_edges_from(arestas_zero)
     # Remover auto-laços
     c.remove_edges_from(nx.selfloop_edges(c))
@@ -138,7 +145,13 @@ def gerar_grafo_coocorrencia(matriz_co):
     # Definir a posição dos nós usando o layout spring
     pos = nx.spring_layout(c, k=3.5, iterations=100, seed=42) 
     # Obter os pesos das arestas para definir a largura
-    pesos = [c[u][v]['weight'] for u, v in c.edges()]
+    pesos = []
+
+    # Itera sobre os pares de nós que formam as arestas
+    for u, v in c.edges():
+        peso = c[u][v]['weight']
+        
+        pesos.append(peso)
     # Desenhar o grafo
     nx.draw(c, pos, 
             with_labels=True, 
@@ -158,7 +171,6 @@ def gerar_grafo_coocorrencia(matriz_co):
     plt.show()
     
     return c
-
 grafo_co = gerar_grafo_coocorrencia(matriz_co)
 
 def calcular_metricas(grafo, nome_do_grafo):
@@ -172,22 +184,37 @@ def calcular_metricas(grafo, nome_do_grafo):
     print(f"- Número de Vértices (Nós): {num_nos}")
     print(f"- Número de Arestas (Ligações): {num_arestas}")
 
-    #Graus de vértice e grau médio
-    graus = [grau for node, grau in grafo.degree()]
-    grau_medio = np.mean(graus) if np.degrees else 0
+    print(f"\nArestas: {list(grafo.edges())}\n")
+
+    # Cria a lista de graus percorrendo o grafo
+    graus = []
+    for node, grau in grafo.degree():
+        graus.append(grau)
+
+    # Calcula a média verificando se a lista não está vazia
+    if len(graus) > 0:
+        grau_medio = np.mean(graus)
+    else:
+        grau_medio = 0
     
     print(f"- Grau Médio: {grau_medio:.4f}")
     max_grau = max(graus) if np.degrees else 0
-    print(f"- (Grau Máximo encontrado: {max_grau})")
+    print(f"- Grau Máximo encontrado: {max_grau}")
 
+    pesos = []
     #Força de conectividade média (peso médio das arestas)
-    pesos = [d.get('weight', 1) for u, v, d in grafo.edges(data=True)]
+    for u, v, data in grafo.edges(data=True):
+        peso = data.get('weight', 1)
     
+        pesos.append(peso)
     if pesos:
         media_pesos = np.mean(pesos)
         print(f"- Força de Conectividade Média (Peso Médio): {media_pesos:.4f}")
     else:
         print("- Força de Conectividade Média: 0 (Grafo sem pesos)")
+
+    pesos = [d.get('weight', 1) for u, v, d in grafo.edges(data=True)]
+    print(f"- Pesos das arestas: {pesos}")
 
     #Densidade da rede
     densidade = nx.density(grafo)
