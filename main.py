@@ -8,16 +8,12 @@ def carregar_excel(arquivo):
     # Verificar se o arquivo existe
     if not os.path.exists(arquivo):
             print(f"Erro: O arquivo '{arquivo}' não foi encontrado.")
-            print("Dica: Verifique se o nome está correto (ex: 'Dado.xlsx') e se está na mesma pasta do script.")
             return None
-        
     try:
         # Ler o arquivo Excel
         df = pd.read_excel(arquivo, engine='openpyxl')
-        print(f"Sucesso! '{arquivo}' carregado com {len(df)} linhas.")
         return df
     except Exception as e:
-        # Tratar erros na leitura do arquivo
         print(f"Erro ao ler: {e}")
         return None
 
@@ -34,8 +30,8 @@ def gerar_matriz_incidencia(df):
     return matriz
 
 matriz_inc = gerar_matriz_incidencia(dados)
-
 print(matriz_inc)
+
 print("\n")
 print("MATRIZ DE SIMILARIDADE:")
 def gerar_matriz_similaridade(matriz_inc):
@@ -95,8 +91,11 @@ def gerar_grafo_similaridade(matriz_sim):
     # Criar o grafo a partir da matriz de similaridade
     s = nx.from_pandas_adjacency(matriz_sim)
     # Remover arestas com peso zero
-    arestas_zero = [(u, v) for u, v, d in s.edges(data=True) if d.get('weight', 0) == 0]
-    s.remove_edges_from(arestas_zero)
+    arestas_zero = []
+    for u, v, d in s.edges(data=True):
+        if d.get('weight', 0) == 0:
+            arestas_zero.append((u, v))
+        s.remove_edges_from(arestas_zero)
 
     plt.figure(figsize=(14, 12))
 
@@ -198,7 +197,10 @@ def calcular_metricas(grafo, nome_do_grafo):
         grau_medio = 0
     
     print(f"- Grau Médio: {grau_medio:.4f}")
-    max_grau = max(graus) if np.degrees else 0
+    if graus:
+        max_grau = max(graus)
+    else:
+        max_grau = 0
     print(f"- Grau Máximo encontrado: {max_grau}")
 
     pesos = []
@@ -213,7 +215,10 @@ def calcular_metricas(grafo, nome_do_grafo):
     else:
         print("- Força de Conectividade Média: 0 (Grafo sem pesos)")
 
-    pesos = [d.get('weight', 1) for u, v, d in grafo.edges(data=True)]
+    pesos = []
+    for u, v, d in grafo.edges(data=True):
+        valor = d.get('weight', 1)
+        pesos.append(valor)
     print(f"- Pesos das arestas: {pesos}")
 
     #Densidade da rede
